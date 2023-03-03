@@ -1,8 +1,8 @@
 # Ambient Intelligence
-## Intellegent Elevator
+## Intelligent Elevator
 
 
-Repo to store out AI project
+Repo to store our AI project
 
 - Bernardo
 - João Travassos
