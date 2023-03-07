@@ -6,4 +6,4 @@ Repo to store our AI project
 
 - Bernardo Santos
 - João Travassos
-- Olga
+- Olga Silva
