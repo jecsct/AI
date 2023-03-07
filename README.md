@@ -1,9 +1,9 @@
 # Ambient Intelligence
-## Intelligent Elevator
 
+## Intelligent Elevator
 
 Repo to store our AI project
 
-- Bernardo
+- Bernardo Santos
 - João Travassos
-- Olga 
+- Olga
