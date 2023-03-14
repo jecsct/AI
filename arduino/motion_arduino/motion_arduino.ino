@@ -14,7 +14,7 @@ void setup()
 
 void loop() 
 {
-  if (detectsMotion() && alertedRasPi ) 
+  if (detectsMotion() && alertedRasPi == 0 ) 
   {
     sendMessageToRasPi();
   } 
