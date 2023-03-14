@@ -23,17 +23,14 @@ int buttonState = 0;
 void loop(){
   buttonState = digitalRead(buttonPin);
 
-  lcd.setCursor(9, 0);
-  lcd.print(previousFloor);
+  printToLCD(9, 0, previousFloor);
 
   if (buttonState == HIGH){ // if true the user called the elevator
   int direction = (currentFloor > previousFloor) ? 1 : -1;
   for (int i = previousFloor; i != currentFloor + direction; i += direction){
-    lcd.setCursor(9, 0);
-    lcd.print(i);
+    printToLCD(9, 0, i);
     delay(timeToChangeFloor); 
-    lcd.setCursor(9, 0);
-    lcd.print("  ");
+    printToLCD(9, 0, " ");
     previousFloor = i;
   }
 }
@@ -46,3 +43,28 @@ void loop(){
     }
   }
 }
+
+/* NAO APAGAR
+int readDistance() {
+  const int trigPin = 4;
+  const int echoPin = 5;
+  
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  long duration = pulseIn(echoPin, HIGH);
+  int distance = duration * 0.034 / 2;
+  
+  return distance;
+}
+*/
+
+void printToLCD(int collumn, int row, char* content)
+{
+  lcd.setCursor(collumn, row, content);
+  lcd.print(content);
+}
+
