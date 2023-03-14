@@ -1,0 +1,32 @@
+[
+    {
+        "_id": "343196631498",
+        "actions": [
+            {
+                "source": 0,
+                "destination": -1,
+                "nr_travels": 13
+            },
+            {
+                "source": 2,
+                "destination": -1,
+                "nr_travels": 5
+            },
+            {
+                "source": 2,
+                "destination": 5,
+                "nr_travels": 6
+            },
+            {
+                "source": 1,
+                "destination": 2,
+                "nr_travels": 4
+            },
+            {
+                "source": 1,
+                "destination": 3,
+                "nr_travels": 2
+            }
+        ]
+    }
+]
