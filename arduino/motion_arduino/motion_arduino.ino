@@ -1,5 +1,3 @@
-import 
-
 // define pins
 #define  motionSensorPin  2;  
 #define ledPin 3;           
