@@ -27,34 +27,16 @@ void loop(){
   lcd.print(previousFloor);
 
   if (buttonState == HIGH){ // if true the user called the elevator
-  if(previousFloor < currentFloor){
-    for (int i = previousFloor; i < currentFloor + 1; i++){
-      lcd.setCursor(9, 0);
-      lcd.print(i);
-      delay(timeToChangeFloor); 
-      if(previousFloor == currentFloor) continue;
-      else{
-        lcd.setCursor(9, 0);
-        lcd.print("  ");
-      }
-
-      previousFloor++;
-    }
+  int direction = (currentFloor > previousFloor) ? 1 : -1;
+  for (int i = previousFloor; i != currentFloor + direction; i += direction){
+    lcd.setCursor(9, 0);
+    lcd.print(i);
+    delay(timeToChangeFloor); 
+    lcd.setCursor(9, 0);
+    lcd.print("  ");
+    previousFloor = i;
   }
-  if(previousFloor > currentFloor){
-    for (int i = previousFloor; i > currentFloor - 1; i--){
-      lcd.setCursor(9, 0);
-      lcd.print(i);
-      delay(timeToChangeFloor);  
-      if(previousFloor == currentFloor) continue;
-      else{
-        lcd.setCursor(9, 0);
-        lcd.print("  ");
-      }
-
-      previousFloor--;
-    }
-  }
+}
   }
 
   // tem aqui um bug
