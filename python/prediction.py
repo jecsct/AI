@@ -58,8 +58,9 @@ class Prediction:
         predictions = []
         sort = sorted(self.source, key=lambda number: number["nr_travels"], reverse=True)
         for i, predict in enumerate(sort):
-            print("Prediction " + str(i+1) + ": " + str(predict["destination"]))
-            predictions.append(predict["destination"])
+            if predict["nr_travels"] > 2:
+                print("Prediction " + str(i+1) + ": " + str(predict["destination"]))
+                predictions.append(predict["destination"])
         return predictions
 
 
