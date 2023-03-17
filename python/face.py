@@ -97,9 +97,4 @@ class FaceRecognition:
             save_on_database(user_id)
         else:
             print("Face recognized")
-            print("Hello " + name)
-
-
-if __name__ == '__main__':
-    fr = FaceRecognition()
-    fr.run_recognition()
+            return name.split(".")[0]

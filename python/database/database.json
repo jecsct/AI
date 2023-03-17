@@ -28,5 +28,15 @@
                 "nr_travels": 2
             }
         ]
+    },
+    {
+        "_id": "595726637749",
+        "actions": [
+            {
+                "source": 1,
+                "destination": 3,
+                "nr_travels": 3
+            }
+        ]
     }
 ]
