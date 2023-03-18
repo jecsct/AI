@@ -36,6 +36,11 @@
                 "source": 1,
                 "destination": 3,
                 "nr_travels": 3
+            },
+            {
+                "source": 1,
+                "destination": 4,
+                "nr_travels": 2
             }
         ]
     }

@@ -96,5 +96,4 @@ class FaceRecognition:
             image.save("faces/" + user_id + ".jpg")
             save_on_database(user_id)
         else:
-            print("Face recognized")
             return name.split(".")[0]
