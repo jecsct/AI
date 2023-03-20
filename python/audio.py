@@ -1,14 +1,9 @@
-import speech_recognition as sr  # SpeechRecognition
+import speech_recognition as sr
 import pyttsx3
 
 
-# Convert text to speech
-def speak_text(command):
-    engine = pyttsx3.init()
-    engine.say(command)
-    engine.runAndWait()
-    engine.stop()
-
+# TODO: IF THE PERSON IS KNOWN AND HAS IS ON THE DATABASE
+# TODO: CHECK IF CURRENT FLOOR != DESTINATION
 
 def convert_floor_string_to_num(floor_str):
     floor_dict = {
@@ -25,54 +20,76 @@ def convert_floor_string_to_num(floor_str):
         "4th": 4,
         "fourth": 4
     }
-    return floor_dict.get(floor_str)
+    return floor_str, floor_dict.get(floor_str)
 
 
-def get_floor(sentence):
-    floor = sentence.split(" ")[4:]
-    floor.remove("floor")
-    return ' '.join(floor)
+class Audio:
+    mic = sr.Recognizer()
+    engine = pyttsx3.init()
+    floor = None
+    engine.setProperty('voice', engine.getProperty('voices'))
+    destinations = [-1, 0, 1, 2, 3, 4, 5, 6]
 
+    def speak_text(self, command):
+        self.engine.say(command)
+        self.engine.runAndWait()
+        self.engine.stop()
 
-class Interaction:
+    def wait_for_call(self, source):
+        called = False
+        while not called:
+            audio = self.mic.listen(source)
+            try:
+                text = self.mic.recognize_google(audio, language='en-US')
+                if "emma" in text.lower():
+                    self.speak_text("Hello! Which floor would you like to go?")
+                    called = True
+                else:
+                    print("Emma not detected.")
+            except sr.UnknownValueError:
+                print("I cannot understand you")
 
-    SENTENCES = [
-        "take me to the minus one floor", "take me to the -1 floor",
-        "take me to the zero floor", "take me to the 0 floor",
-        "take me to the first floor", "take me to the 1st floor",
-        "take me to the second floor", "take me to the 2nd floor",
-        "take me to the third floor", "take me to the 3rd floor",
-        "take me to the fourth floor", "take me to the 4th floor",
-        "take me to the fifth floor", "take me to the 5th floor",
-        "take me to the sixth floor" "take me to the 6th floor",
-    ]
+    def wait_for_response(self, source):
+        while True:
+            audio = self.mic.listen(source)
+            try:
+                self.floor = convert_floor_string_to_num(self.mic.recognize_google(audio, language='en-US').lower())
+                if self.floor[1] in self.destinations:
+                    self.speak_text("Do you want to go to the " + self.floor[0] + " floor?")
+                    return
+                else:
+                    self.speak_text("Provided floor not valid. Please try again.")
+            except sr.UnknownValueError:
+                self.speak_text("I cannot understand you")
+
+    def wait_for_confirmation(self, source):
+        while True:
+            audio = self.mic.listen(source)
+            try:
+                text = self.mic.recognize_google(audio, language='en-US')
+                if text.lower() == "no":
+                    self.speak_text("Okay. Which floor would you like to go?")
+                    return False
+                elif text.lower() == "yes":
+                    self.speak_text(str(self.floor[0]) + " floor, here we go!")
+                    print("Final destination: " + str(self.floor[1]))
+                    return True
+                else:
+                    self.speak_text("Provided action not valid. Please say yes or no.")
+            except sr.UnknownValueError:
+                self.speak_text("I cannot understand you")
 
     def interact(self):
-        r = sr.Recognizer()
-        try:
-            # use the microphone as source for input.
-            with sr.Microphone() as source:
-                speak_text("Hello! I can't recognize you. Which floor would you like to go?")
-                r.adjust_for_ambient_noise(source, duration=0.2)
+        with sr.Microphone() as source:
+            self.mic.adjust_for_ambient_noise(source, duration=0.2)
 
-                # listens for the user's input
-                audio = r.listen(source)
-                first = r.recognize_google(audio).lower()
+            print("Waiting for call...")
+            self.wait_for_call(source)
 
-                for sentence in self.SENTENCES:
-                    if sentence == first:
-                        speak_text("Did you say " + first)
+            while True:
+                print("Listening for instruction...")
+                self.wait_for_response(source)
 
-                        audio = r.listen(source)
-                        response = r.recognize_google(audio).lower()
-
-                        if response == "yes":
-                            floor = get_floor(sentence)
-                            speak_text("Okay " + floor + "floor, here we go!")
-                            return convert_floor_string_to_num(floor)
-
-        except sr.RequestError as e:
-            print("Could not request results; {0}".format(e))
-
-        except sr.UnknownValueError:
-            print("unknown error occurred")
+                print("Listening for confirmation...")
+                if self.wait_for_confirmation(source):
+                    return self.floor[1]
