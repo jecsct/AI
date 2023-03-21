@@ -28,8 +28,8 @@ class Audio:
     destinations = [-1, 0, 1, 2, 3, 4, 5, 6]
     sentPrediction = False
 
-    def speak_text(self, command):
-        self.engine.say(command)
+    def speak_text(self, speech):
+        self.engine.say(speech)
         self.engine.runAndWait()
         self.engine.stop()
 
@@ -49,7 +49,7 @@ class Audio:
                         self.speak_text("Do you want to go to the " + self.floor[0] + " floor?")
                         return
                     else:
-                        self.speak_text("Provided floor not valid. Please try again.")
+                        self.speak_text("Provided invalid floor. Please try again.")
             except sr.UnknownValueError:
                 self.speak_text("I cannot understand you")
 
