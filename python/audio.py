@@ -2,9 +2,6 @@ import speech_recognition as sr
 import pyttsx3
 
 
-# TODO: IF THE PERSON IS KNOWN AND HAS IS ON THE DATABASE
-# TODO: CHECK IF CURRENT FLOOR != DESTINATION
-
 def convert_floor_string_to_num(floor_str):
     floor_dict = {
         "-1": -1,
@@ -29,36 +26,30 @@ class Audio:
     floor = None
     engine.setProperty('voice', engine.getProperty('voices'))
     destinations = [-1, 0, 1, 2, 3, 4, 5, 6]
+    sentPrediction = False
 
     def speak_text(self, command):
         self.engine.say(command)
         self.engine.runAndWait()
         self.engine.stop()
 
-    def wait_for_call(self, source):
-        called = False
-        while not called:
-            audio = self.mic.listen(source)
-            try:
-                text = self.mic.recognize_google(audio, language='en-US')
-                if "emma" in text.lower():
-                    self.speak_text("Hello! Which floor would you like to go?")
-                    called = True
-                else:
-                    print("Emma not detected.")
-            except sr.UnknownValueError:
-                print("I cannot understand you")
-
-    def wait_for_response(self, source):
+    def wait_for_response(self, source, prediction, current_floor):
         while True:
             audio = self.mic.listen(source)
             try:
-                self.floor = convert_floor_string_to_num(self.mic.recognize_google(audio, language='en-US').lower())
-                if self.floor[1] in self.destinations:
-                    self.speak_text("Do you want to go to the " + self.floor[0] + " floor?")
+                if prediction is not None and self.sentPrediction is False:
+                    self.speak_text("Hello! Would you like to go to floor " + str(prediction) + "?")
+                    self.floor = (prediction, prediction)
+                    self.sentPrediction = True
                     return
                 else:
-                    self.speak_text("Provided floor not valid. Please try again.")
+                    self.speak_text("Which floor would you like to go?")
+                    self.floor = convert_floor_string_to_num(self.mic.recognize_google(audio, language='en-US').lower())
+                    if self.floor[1] in self.destinations and self.floor[1] is not current_floor:
+                        self.speak_text("Do you want to go to the " + self.floor[0] + " floor?")
+                        return
+                    else:
+                        self.speak_text("Provided floor not valid. Please try again.")
             except sr.UnknownValueError:
                 self.speak_text("I cannot understand you")
 
@@ -68,7 +59,6 @@ class Audio:
             try:
                 text = self.mic.recognize_google(audio, language='en-US')
                 if text.lower() == "no":
-                    self.speak_text("Okay. Which floor would you like to go?")
                     return False
                 elif text.lower() == "yes":
                     self.speak_text(str(self.floor[0]) + " floor, here we go!")
@@ -79,16 +69,13 @@ class Audio:
             except sr.UnknownValueError:
                 self.speak_text("I cannot understand you")
 
-    def interact(self):
+    def interact(self, prediction, current_floor):
         with sr.Microphone() as source:
             self.mic.adjust_for_ambient_noise(source, duration=0.2)
 
-            print("Waiting for call...")
-            self.wait_for_call(source)
-
             while True:
                 print("Listening for instruction...")
-                self.wait_for_response(source)
+                self.wait_for_response(source, prediction, current_floor)
 
                 print("Listening for confirmation...")
                 if self.wait_for_confirmation(source):

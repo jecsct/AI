@@ -1,6 +1,6 @@
 import json
 
-from audio import Audio
+from audio_text import Audio
 from face import FaceRecognition
 from prediction import Prediction
 
@@ -30,7 +30,7 @@ def add_action(user_id, src, dst):
 
 if __name__ == '__main__':
     user = None
-    currentFloor = 1  # TODO: receive from arduino
+    current_floor = 1  # TODO: receive from arduino
 
     # Recognize the face and identify the user
     while user is None:
@@ -40,16 +40,18 @@ if __name__ == '__main__':
 
     # Make prediction
     prediction = Prediction(str(user))
-    prediction.get_actions_from_source(currentFloor)
+    prediction.get_actions_from_source(current_floor)
     try:
-        print("Prediction: " + str(prediction.predict_floor()[0]))
+        prediction = prediction.predict_floor()[0]
+        print("Prediction: " + str(prediction))
     except IndexError:
+        prediction = None
         print("No prediction for current location.")
 
     # Interact with de user
-    desiredFloor = Audio().interact()
-    print("Desired floor: " + str(desiredFloor))
+    desired_floor = Audio().interact(prediction, current_floor)
+    print("Desired floor: " + str(desired_floor))
 
     # Add interaction to database
-    add_action(user, currentFloor, desiredFloor)
-    print("Action added to the database: [" + str(currentFloor) + ", " + str(desiredFloor) + "]")
+    add_action(user, current_floor, int(desired_floor))
+    print("Action added to the database: [" + str(current_floor) + ", " + str(desired_floor) + "]")
