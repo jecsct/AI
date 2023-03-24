@@ -37,11 +37,14 @@ class Audio:
                 return
             else:
                 self.floor = input("Which floor would you like to go? ")
-                if int(self.floor) in self.destinations and int(self.floor) is not current_floor:
-                    print("Do you want to go to the " + self.floor + " floor? ")
-                    return
-                else:
-                    print("Provided floor not valid. Please try again.")
+                try:
+                    if int(self.floor) in self.destinations and int(self.floor) is not current_floor:
+                        print("Do you want to go to the " + self.floor + " floor? ")
+                        return
+                    else:
+                        print("Provided floor not valid. Please try again.")
+                except ValueError:
+                    print("Provided floor not valid. Please try again")
 
     def wait_for_confirmation(self):
         while True:

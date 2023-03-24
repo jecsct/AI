@@ -23,7 +23,7 @@ def convert_floor_string_to_num(floor_str):
 class Audio:
     mic = sr.Recognizer()
     engine = pyttsx3.init()
-    floor = None
+    destination_floor = None
     engine.setProperty('voice', engine.getProperty('voices'))
     destinations = [-1, 0, 1, 2, 3, 4, 5, 6]
     sentPrediction = False
@@ -39,14 +39,14 @@ class Audio:
             try:
                 if prediction is not None and self.sentPrediction is False:
                     self.speak_text("Hello! Would you like to go to floor " + str(prediction) + "?")
-                    self.floor = (prediction, prediction)
+                    self.destination_floor = (prediction, prediction)
                     self.sentPrediction = True
                     return
                 else:
                     self.speak_text("Which floor would you like to go?")
-                    self.floor = convert_floor_string_to_num(self.mic.recognize_google(audio, language='en-US').lower())
-                    if self.floor[1] in self.destinations and self.floor[1] is not current_floor:
-                        self.speak_text("Do you want to go to the " + self.floor[0] + " floor?")
+                    self.destination_floor = convert_floor_string_to_num(self.mic.recognize_google(audio, language='en-US').lower())
+                    if self.destination_floor[1] in self.destinations and self.destination_floor[1] is not current_floor:
+                        self.speak_text("Do you want to go to the " + self.destination_floor[0] + " floor?")
                         return
                     else:
                         self.speak_text("Provided floor not valid. Please try again.")
@@ -61,8 +61,8 @@ class Audio:
                 if text.lower() == "no":
                     return False
                 elif text.lower() == "yes":
-                    self.speak_text(str(self.floor[0]) + " floor, here we go!")
-                    print("Final destination: " + str(self.floor[1]))
+                    self.speak_text(str(self.destination_floor[0]) + " floor, here we go!")
+                    print("Final destination: " + str(self.destination_floor[1]))
                     return True
                 else:
                     self.speak_text("Provided action not valid. Please say yes or no.")
@@ -79,4 +79,4 @@ class Audio:
 
                 print("Listening for confirmation...")
                 if self.wait_for_confirmation(source):
-                    return self.floor[1]
+                    return self.destination_floor[1]

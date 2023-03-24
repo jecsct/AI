@@ -15,18 +15,32 @@ def random_id():
 
 
 def save_on_database(user_id):
-    with open('database/database.json', 'r') as f:
-        json_data = json.load(f)
+    try:
+        f = open('database/database.json', 'x')
+        print(f"{'database/database.json'} created successfully!")
+        f.close()
 
-    new_item = {
-        "_id": user_id,
-        "actions": []
-    }
+        new_item = [{
+            "_id": user_id,
+            "actions": []
+        }]
 
-    json_data.append(new_item)
+        with open('database/database.json', 'w') as f:
+            json.dump(new_item, f, indent=4)
 
-    with open('database/database.json', 'w') as f:
-        json.dump(json_data, f, indent=4)
+    except FileExistsError:
+        with open('database/database.json', 'r') as f:
+            json_data = json.load(f)
+
+        new_item = {
+            "_id": user_id,
+            "actions": []
+        }
+
+        json_data.append(new_item)
+
+        with open('database/database.json', 'w') as f:
+            json.dump(json_data, f, indent=4)
 
 
 def remove_from_database(user_id):
@@ -64,15 +78,15 @@ class FaceRecognition:
 
     def run_recognition(self):
         video_capture = cv2.VideoCapture(0)
-        ret, frame = video_capture.read()
+        _, frame = video_capture.read()
         name = None
 
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-        rgb_small_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Find all the faces and face encodings in the current frame of video
-        locations = face_recognition.face_locations(rgb_small_frame)
-        faces = face_recognition.face_encodings(rgb_small_frame, locations)
+        locations = face_recognition.face_locations(rgb_frame)
+        faces = face_recognition.face_encodings(rgb_frame, locations)
 
         if len(self.known_faces) > 0:
             for face in faces:
@@ -90,7 +104,7 @@ class FaceRecognition:
         if name is None:
             print("Face not recognized")
             print("Saving image to the database")
-            face = np.array(frame)
+            face = np.array(rgb_frame)
             image = Image.fromarray(face)
             user_id = random_id()
             image.save("faces/" + user_id + ".jpg")
