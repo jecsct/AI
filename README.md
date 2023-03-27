@@ -1,14 +1,3 @@
-# Ambient Intelligence
-
-## Intelligent Elevator
-
-Repo to store our AI project
-
-- Bernardo Santos
-- João Travassos
-- Olga Silva
-
-
 # Ambient Intelligence - Intelligent Elevator
 
 Implementation of an intelligent elevator to install in our homes. 
