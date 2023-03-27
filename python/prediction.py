@@ -18,6 +18,7 @@ class Prediction:
     def get_user(self):
         with open('database/database.json', 'r') as f:
             database = json.load(f)
+        f.close()
 
         for item in database:
             if item["_id"] == self.user_id:

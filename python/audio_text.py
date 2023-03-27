@@ -21,6 +21,10 @@ def convert_floor_string_to_num(floor_str):
 
 
 class Audio:
+
+    def __init__(self, event):
+        self.event = event
+
     mic = sr.Recognizer()
     engine = pyttsx3.init()
     floor = None
@@ -30,6 +34,8 @@ class Audio:
 
     def wait_for_response(self, prediction, current_floor):
         while True:
+            if self.event.is_set():
+                return
             if prediction is not None and self.sentPrediction is False:
                 print("Hello! Would you like to go to " + str(prediction) + " floor?")
                 self.floor = prediction
@@ -49,6 +55,8 @@ class Audio:
     def wait_for_confirmation(self):
         while True:
             response = input()
+            if self.event.is_set():
+                break
             if response == "no":
                 return False
             elif response == "yes":
@@ -59,7 +67,12 @@ class Audio:
 
     def interact(self, prediction, current_floor):
         while True:
+            print("Waiting for instruction...")
             self.wait_for_response(prediction, current_floor)
 
+            if self.event.is_set():
+                break
+
+            print("Waiting for confirmation...")
             if self.wait_for_confirmation():
                 return self.floor

@@ -1,3 +1,5 @@
+import asyncio
+
 import speech_recognition as sr
 import pyttsx3
 
@@ -21,6 +23,10 @@ def convert_floor_string_to_num(floor_str):
 
 
 class Audio:
+
+    def __init__(self, event):
+        self.event = event
+
     mic = sr.Recognizer()
     engine = pyttsx3.init()
     destination_floor = None
@@ -37,7 +43,9 @@ class Audio:
         while True:
             audio = self.mic.listen(source)
             try:
-                if prediction is not None and self.sentPrediction is False:
+                if self.event.is_set():
+                    return
+                elif prediction is not None and self.sentPrediction is False:
                     self.speak_text("Hello! Would you like to go to floor " + str(prediction) + "?")
                     self.destination_floor = (prediction, prediction)
                     self.sentPrediction = True
@@ -57,6 +65,8 @@ class Audio:
         while True:
             audio = self.mic.listen(source)
             try:
+                if self.event.is_set():
+                    return True
                 text = self.mic.recognize_google(audio, language='en-US')
                 if text.lower() == "no":
                     return False
@@ -76,6 +86,9 @@ class Audio:
             while True:
                 print("Listening for instruction...")
                 self.wait_for_response(source, prediction, current_floor)
+
+                if self.event.is_set():
+                    break
 
                 print("Listening for confirmation...")
                 if self.wait_for_confirmation(source):
