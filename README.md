@@ -33,13 +33,12 @@ and the using the 'apt-get' also install the following packages:
 
 ## Usage
 
-Steps:
 For the 3 arduinos, only power is needed. The code has already been uploaded
 
-For the Rapberry Pi, turn it on, and on the terminal console, after installing everything(see Installation), go to the download location, open it, run the 'master.py' as follows 
+For the Rapberry Pi, turn it on, and on the terminal console, after installing everything(see Installation), go to the download location, open it, and in the terminal run the 'master.py' as follows: 
     
 ```bash 
-python master.py
+$ python master.py
 ```
 
 
