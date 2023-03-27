@@ -111,8 +111,14 @@ def wait_for_verbal_response(name, event):
     event.set()
 
 
+def send_floor():
+    ser.reset_input_buffer()
+    ser.write((str(result) + "\n").encode('utf-8'))
+
+
 def run():
     global current_floor
+
     # Get arduino input
     current_floor = get_current_floor()
 
@@ -129,7 +135,7 @@ def run():
     # Add interaction to database
     add_action(str(user), int(current_floor), int(result))
 
+    # Send destination to arduino
+    send_floor()
+
     print("Action added to the database: [" + str(current_floor) + ", " + str(result) + "]")
-    t2.join()
-    t1.join()
-    print("LEFT T2")
