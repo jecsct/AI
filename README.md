@@ -1,24 +1,8 @@
 # Ambient Intelligence - Intelligent Elevator
 
-Implementation of an intelligent elevator to install in our homes. 
-
-Makes life easier and accessible to everyone! 
-
 ## Installation
 
-In the Raspeberry Pi, use the package manager [pip](https://pip.pypa.io/en/stable/) to install the following packages:
- * SpeechRecognition
- * pyttsx3
- * face-recognition
- * opencv-python
- * pyaudio
-
-and the using the 'apt-get' also install the following packages: 
- * libespeak1
- * libatlas-base-dev
- * flac
-
- So you should be executing the following commands:
+In the Raspberry Pi 4 execute the following commands:
   ```bash 
   pip install SpeechRecognition
   pip install pyttsx3
@@ -29,23 +13,18 @@ and the using the 'apt-get' also install the following packages:
   sudo apt-get install libespeak1
   sudo apt-get install libatlas-base-dev
   sudo apt-get install flac
-  ``` 
+  ```
+
+The above commands install the required libraries and plugins needed to run the project.
 
 ## Usage
 
-For the 3 arduinos, only power is needed. The code has already been uploaded
+Connect the 3 Arduinos to a power source, preferably a computer (not charging). The code is already uploaded so you don't need to do anything more.
 
-For the Rapberry Pi, turn it on, and on the terminal console, after installing everything(see Installation), go to the download location, open it, and in the terminal run the 'master.py' as follows: 
-    
+Connect the Raspberry PI to the main Arduino (the one with all the elevator floor buttons and the LED). To run the code you should be able to connect it to a screen, a camera, a mouse, a keyboard and a speaker (included in the screen or an external one). 
+
+After that please run the following command on the terminal console (at the download location).
+
 ```bash 
 $ python master.py
 ```
-
-
-## License
-
-@Tecnico
-
-- Bernardo Santos - ist1105709
-- João Travassos - ist1105710
-- Olga Silva - ist1105714
