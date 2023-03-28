@@ -31,7 +31,6 @@ unsigned long previousMillisFloorChange = 0; // Will store last time X was updat
 
 unsigned long handleDoorStartTime = 0;
 unsigned long handleLightStartTime = 0;
-// Todo: timer de door open
 
 bool buttonPressedFlag = false;
 unsigned long startTime = 0;
@@ -45,6 +44,8 @@ bool handleLightFlag = false;
 bool destinationArrived = true;
 
 bool started = false;
+
+bool outsideRequest = false;
 
 void setup() {
   Serial.begin(9600);
@@ -85,11 +86,10 @@ void loop() {
   }
 
   if (Serial.available() > 0) {
-    String data = Serial.readStringUntil('\n');
-    int received = (int) data;
+    int data = Serial.read() - '0';
     Serial.print("You sent me: ");
-    Serial.println(received);
-    buttonPressed[received+1] = true;
+    Serial.println(data);
+    buttonPressed[data+1] = true;
     travel();
   }
 
@@ -106,8 +106,9 @@ void receiveEvent(int howMany) {
     Serial.print(" called!!");
 
     buttonPressed[nextStop+1] = true;
-    travel(); // Will it work?
-    //buttonPressedFlag = true; // Will it work?
+    travel();
+
+    outsideRequest = true;
   }
 }
 
@@ -214,6 +215,12 @@ void handleFloorChange() {
       travelFlag = false;
       buttonPressed[currentFloor+1] = false;
       destinationArrived = true;
+      
+      if(outsideRequest) {
+        sendSourceToPi(currentFloor);
+        outsideRequest = false;
+      }
+      
       if(isTravelPending()) {
         Serial.println("Going to next pending floor!");
         destinationArrived = false;
@@ -226,18 +233,33 @@ void handleFloorChange() {
   }
 }
 
-void sendSourceToPi() {
+void sendSourceToPi(int floorSource) {
   // send message
-  switch(sourceFloor) {
-    case -1: Serial.print("SRC-1"); break;
-    case 0: Serial.print("SRC0"); break;
-    case 1: Serial.print("SRC1"); break;
-    case 2: Serial.print("SRC2"); break;
-    case 3: Serial.print("SRC3"); break;
-    case 4: Serial.print("SRC4"); break;
-    case 5: Serial.print("SRC5"); break;
-    case 6: Serial.print("SRC6"); break;
-    default:
+  switch(floorSource) {
+    case -1: Serial.println("SRC-1"); break;
+    case 0: Serial.println("SRC0"); break;
+    case 1: Serial.println("SRC1"); break;
+    case 2: Serial.println("SRC2"); break;
+    case 3: Serial.println("SRC3"); break;
+    case 4: Serial.println("SRC4"); break;
+    case 5: Serial.println("SRC5"); break;
+    case 6: Serial.println("SRC6"); break;
+    default: break;
+  }
+}
+
+void sendDestinationToPi(int floorDestination) {
+  // send message
+  switch(floorDestination) {
+    case -1: Serial.println("DST-1"); break;
+    case 0: Serial.println("DST0"); break;
+    case 1: Serial.println("DST1"); break;
+    case 2: Serial.println("DST2"); break;
+    case 3: Serial.println("DST3"); break;
+    case 4: Serial.println("DST4"); break;
+    case 5: Serial.println("DST5"); break;
+    case 6: Serial.println("DST6"); break;
+    default: break;
   }
 }
 
@@ -284,10 +306,6 @@ int* getPressedFloors() {
     }
   }
 
-  //Serial.print("There are ");
-  //Serial.print(num);
-  //Serial.println(" floors pressed at the moment.");
-
   if(num == 0) return 0;
 
   int* res = new int[num];
@@ -311,5 +329,3 @@ int getClosestDestinationFloor(int dest[]) {
   }
   return closest;
 }
-
-
