@@ -3,10 +3,10 @@
 
 #define FLOORS_NUM 8
 
-#define HOLD_PERIOD 3000
-#define FLOOR_CHANGE_PERIOD 3000
+#define HOLD_PERIOD 2000
+#define FLOOR_CHANGE_PERIOD 2000
 #define CLOSE_PERIOD 2000
-#define LIGHT_PERIOD 6000
+#define LIGHT_PERIOD 10000
 
 // Controller identification
 const int controller = 0;
@@ -67,6 +67,8 @@ void loop() {
 
   if(!started) {
     started = true;
+    for(int i=0; i<FLOORS_NUM; i++)
+      buttonPressed[i]=false;
     sendCurrentFloor();
   }
 
@@ -87,6 +89,11 @@ void loop() {
 
   if (Serial.available() > 0) {
     int data = Serial.read() - '0';
+
+    if (data == 7) { // -1 floor
+      data = -1;
+    }
+
     Serial.print("You sent me: ");
     Serial.println(data);
     buttonPressed[data+1] = true;
@@ -145,8 +152,11 @@ void checkButtonPressed(int i) {
   lastButtonState[i] = currentButtonState[i];          // Stores the previous state of the push button
   currentButtonState[i] = digitalRead(buttonPins[i]);  // Stores the present state of the push button
   if (lastButtonState[i] == HIGH && currentButtonState[i] == LOW) {
-    if(!buttonPressed[i])
+    if(!buttonPressed[i]) {
       buttonPressedFlag = true;
+      sendDestinationToPi(floors[i]);
+    }
+    
     buttonPressed[i] = true;
     
     Serial.print("Button floor ");
