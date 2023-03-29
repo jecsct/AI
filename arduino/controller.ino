@@ -2,19 +2,15 @@
 #include "Wire.h"
 
 #define FLOORS_NUM 8
-
 #define HOLD_PERIOD 2000
 #define FLOOR_CHANGE_PERIOD 2000
 #define CLOSE_PERIOD 2000
-#define LIGHT_PERIOD 10000
+#define LIGHT_PERIOD 5000
 
-// Controller identification
-const int controller = 0;
+const int controller = 0; // Controller identification
 
-// Floors
 const int buttonPins[FLOORS_NUM] = {2, 3, 4, 5, 6, 7, 8, 9};
-const int floors[FLOORS_NUM] = {-1, 0, 1, 2, 3, 4, 5, 6};
-
+const int floors[FLOORS_NUM] = {-1, 0, 1, 2, 3, 4, 5, 6}; // Floors
 const int light = 12;
 
 int currentButtonState[FLOORS_NUM];
@@ -22,29 +18,24 @@ int lastButtonState[FLOORS_NUM];
 
 bool buttonPressed[FLOORS_NUM] = {false, false, false, false, false, false, false, false};
 
+bool started = false;
 int currentFloor = 0;
 int destinationFloor = 0;
 int sourceFloor = 0;
 bool doorIsOpen = false;
 
-unsigned long previousMillisFloorChange = 0; // Will store last time X was updated
-
+unsigned long startTime = 0;
+unsigned long previousMillisFloorChange = 0;
 unsigned long handleDoorStartTime = 0;
 unsigned long handleLightStartTime = 0;
 
 bool buttonPressedFlag = false;
-unsigned long startTime = 0;
 bool flag = false;
 bool travelFlag = false;
 bool pendingTravel = false;
-
 bool handleDoorFlag = false;
-bool handleLightFlag = false;
-
+bool handleLightFlag = true;
 bool destinationArrived = true;
-
-bool started = false;
-
 bool outsideRequest = false;
 
 void setup() {
@@ -56,98 +47,51 @@ void setup() {
 
   pinMode(light, OUTPUT);
   
-
   // Master communication
   Wire.begin(controller);
 
+  // Floor request communication
   Wire.onReceive(receiveEvent);
 }
 
 void loop() {
 
+  // Start routine of arduino
   if(!started) {
     started = true;
     for(int i=0; i<FLOORS_NUM; i++)
       buttonPressed[i]=false;
     sendCurrentFloor();
+    digitalWrite(light, HIGH);    
   }
 
+  // Check if any button was pressed
   for(int i=0; i<FLOORS_NUM; i++)
     checkButtonPressed(i);
   
-  handlePressButtonTime();
+  // Controls the hold time after pressing a button and travel
+  handlePressButtonHoldTime();
 
-  if(travelFlag) handleFloorChange();
+  // Change floors when travel initialized
+  if(travelFlag) {
+    handleFloorChange();
+    digitalWrite(light, HIGH);
+  }
 
+  // Lights up the led when door is open
   if(doorIsOpen) digitalWrite(light, HIGH);
 
+  // Closes the door upon arriving at destination after a period
   if(destinationArrived) handleDoorTime();
 
-  if(!doorIsOpen && !travelFlag) {
-    handleLight();
-  }
-
-  if (Serial.available() > 0) {
-    int data = Serial.read() - '0';
-
-    if (data == 7) { // -1 floor
-      data = -1;
-    }
-
-    Serial.print("You sent me: ");
-    Serial.println(data);
-    buttonPressed[data+1] = true;
-    travel();
-  }
-
+  // Turns off led after a period of not being utilized
+  if(!doorIsOpen && !travelFlag) handleLight();
+  
+  // Listens to voice requests
+  receiveVoiceFloor();
 }
 
-void receiveEvent(int howMany) {
-  if(howMany == 1) {
-    char floor = Wire.read();
-
-    int nextStop = (int)floor;
-
-    Serial.print("Floor ");
-    Serial.print(nextStop);
-    Serial.print(" called!!");
-
-    buttonPressed[nextStop+1] = true;
-    travel();
-
-    outsideRequest = true;
-  }
-}
-
-void sendCurrentFloor() {
-  int destination = 2; // MUDAR
-  Wire.beginTransmission(destination);  // transmit to device
-  Wire.write(currentFloor);                  
-  Wire.endTransmission();
-}
-
-void handleDoorTime() {
-  if (!handleDoorFlag) {
-    handleDoorFlag = true;
-    handleDoorStartTime = millis();
-  }
-  if ((millis() - handleDoorStartTime >= CLOSE_PERIOD) && handleDoorFlag) {
-    if(doorIsOpen) closeDoor();
-    handleDoorFlag = false;
-  }
-}
-
-void handleLight() {
-  if (handleLightFlag) {
-    handleLightFlag = false;
-    handleLightStartTime = millis();
-  }
-  if ((millis() - handleLightStartTime >= LIGHT_PERIOD) && !handleLightFlag) {
-    digitalWrite(light, LOW);
-  }
-}
-
-
+// Checks if any button was pressed
 void checkButtonPressed(int i) {
   lastButtonState[i] = currentButtonState[i];          // Stores the previous state of the push button
   currentButtonState[i] = digitalRead(buttonPins[i]);  // Stores the present state of the push button
@@ -165,37 +109,32 @@ void checkButtonPressed(int i) {
   }
 }
 
-void handlePressButtonTime() {
+// Travels after a period of time of a button being pressed
+void handlePressButtonHoldTime() {
   if (buttonPressedFlag) {
     buttonPressedFlag = false;
     startTime = millis();
     flag = true;
-
-    if (travelFlag) {
-      pendingTravel = true;
-      //Serial.println("Estrou aqui crl");
-    }
+    if (travelFlag) pendingTravel = true;
   }
 
   if ((millis() - startTime >= HOLD_PERIOD) && flag) {
     flag = false;
-    Serial.println("PASSOU 3 SEGUNDOS.");
-    if(!travelFlag)
-      travel();
+    if(!travelFlag) travel();
   }
 }
 
+// Initializes a travel
 void travel() {
   int* pressedFloors = getPressedFloors();
-
   int floor = getClosestDestinationFloor(pressedFloors);
-
   destinationFloor = floor;
   sourceFloor = currentFloor;
 
   if(currentFloor == destinationFloor && !doorIsOpen) {
     Serial.print("You're already at your destination: floor ");
-    Serial.println(currentFloor);
+    Serial.print(currentFloor);
+    Serial.println(".");
     openDoor();
     return;
   }
@@ -206,6 +145,7 @@ void travel() {
   travelFlag = true;
 }
 
+// Travels through floors
 void handleFloorChange() {
   if (millis() - previousMillisFloorChange >= FLOOR_CHANGE_PERIOD) {
     
@@ -216,11 +156,12 @@ void handleFloorChange() {
 
     sendCurrentFloor();
 
-    Serial.print("Floor changed to ");
-    Serial.println(currentFloor);
+    Serial.print("Current floor changed to ");
+    Serial.print(currentFloor);
+    Serial.println(".");
     
     if(currentFloor == destinationFloor) {
-      Serial.println("Arrived at destination!!!!!");
+      Serial.println("Arrived at destination!");
       openDoor();
       travelFlag = false;
       buttonPressed[currentFloor+1] = false;
@@ -243,71 +184,7 @@ void handleFloorChange() {
   }
 }
 
-void sendSourceToPi(int floorSource) {
-  // send message
-  switch(floorSource) {
-    case -1: Serial.println("SRC-1"); break;
-    case 0: Serial.println("SRC0"); break;
-    case 1: Serial.println("SRC1"); break;
-    case 2: Serial.println("SRC2"); break;
-    case 3: Serial.println("SRC3"); break;
-    case 4: Serial.println("SRC4"); break;
-    case 5: Serial.println("SRC5"); break;
-    case 6: Serial.println("SRC6"); break;
-    default: break;
-  }
-}
-
-void sendDestinationToPi(int floorDestination) {
-  // send message
-  switch(floorDestination) {
-    case -1: Serial.println("DST-1"); break;
-    case 0: Serial.println("DST0"); break;
-    case 1: Serial.println("DST1"); break;
-    case 2: Serial.println("DST2"); break;
-    case 3: Serial.println("DST3"); break;
-    case 4: Serial.println("DST4"); break;
-    case 5: Serial.println("DST5"); break;
-    case 6: Serial.println("DST6"); break;
-    default: break;
-  }
-}
-
-void openDoor() {
-  doorIsOpen = true;
-  //Serial.println("OPEN");
-  Serial.println("OPENING DOOR");
-}
-
-void closeDoor() {
-  doorIsOpen = false;
-  handleLightFlag = true;
-  //Serial.println("CLOS");
-  Serial.println("CLOSING DOOR");
-}
-
-bool isCloser(int a, int b, int cur) {
-    return abs(a - cur) < abs(b - cur);
-}
-
-int myAbs(int x) {
-  if (x < 0)
-    return -x;
-  else 
-    return x; 
-}
-
-bool isTravelPending() {
-  int n = 0;
-  for(int i = 0; i<FLOORS_NUM; i++) {
-    if(buttonPressed[i])
-      n++;
-  }
-  if(n>0) return true;
-  return false;
-}
-
-
+// Gets every pressed floor
 int* getPressedFloors() {
   int num = 0;
   for(int i=0; i<FLOORS_NUM; i++) {
@@ -328,6 +205,7 @@ int* getPressedFloors() {
   return res;
 }
 
+// Gets the closer destination to the current position
 int getClosestDestinationFloor(int dest[]) {
   if(sizeof(dest) == 1) {
     return dest[0];
@@ -338,4 +216,131 @@ int getClosestDestinationFloor(int dest[]) {
       closest = dest[i];
   }
   return closest;
+}
+
+// Closes the door after a period of time
+void handleDoorTime() {
+  if (!handleDoorFlag) {
+    handleDoorFlag = true;
+    handleDoorStartTime = millis();
+  }
+  if ((millis() - handleDoorStartTime >= CLOSE_PERIOD) && handleDoorFlag) {
+    if(doorIsOpen) closeDoor();
+    handleDoorFlag = false;
+  }
+}
+
+// Turns off led after a period of time
+void handleLight() {
+  if (handleLightFlag) {
+    handleLightFlag = false;
+    handleLightStartTime = millis();
+  }
+  if ((millis() - handleLightStartTime >= LIGHT_PERIOD) && !handleLightFlag) {
+    digitalWrite(light, LOW);
+  }
+}
+
+// Sends source floor to Raspberry Pi
+void sendSourceToPi(int floorSource) {
+  // send message
+  switch(floorSource) {
+    case -1: Serial.println("SRC-1"); break;
+    case 0: Serial.println("SRC0"); break;
+    case 1: Serial.println("SRC1"); break;
+    case 2: Serial.println("SRC2"); break;
+    case 3: Serial.println("SRC3"); break;
+    case 4: Serial.println("SRC4"); break;
+    case 5: Serial.println("SRC5"); break;
+    case 6: Serial.println("SRC6"); break;
+    default: break;
+  }
+}
+
+// Sends destination floor to Raspberry Pi
+void sendDestinationToPi(int floorDestination) {
+  // send message
+  switch(floorDestination) {
+    case -1: Serial.println("DST-1"); break;
+    case 0: Serial.println("DST0"); break;
+    case 1: Serial.println("DST1"); break;
+    case 2: Serial.println("DST2"); break;
+    case 3: Serial.println("DST3"); break;
+    case 4: Serial.println("DST4"); break;
+    case 5: Serial.println("DST5"); break;
+    case 6: Serial.println("DST6"); break;
+    default: break;
+  }
+}
+
+// Sends the current floor to the Arduinos (for LCD display)
+void sendCurrentFloor() {
+  int destination = 2; // Slave
+  Wire.beginTransmission(destination);  // transmit to device
+  Wire.write(currentFloor);                  
+  Wire.endTransmission();
+}
+
+// Receives floor requests from Arduino
+void receiveEvent(int howMany) {
+  if(howMany == 1) {
+    char floor = Wire.read();
+
+    int nextStop = (int)floor;
+
+    Serial.print("Floor ");
+    Serial.print(nextStop);
+    Serial.println(" requested the elevator.");
+
+    buttonPressed[nextStop+1] = true;
+    travel();
+
+    outsideRequest = true;
+  }
+}
+
+// Listens to voice requests from Raspberry Pi
+void receiveVoiceFloor() {
+  if (Serial.available() > 0) {
+    int data = Serial.read() - '0';
+
+    if (data == 7) { // -1 floor special case
+      data = -1;
+    }
+
+    Serial.print("Voice recognition chose floor ");
+    Serial.print(data);
+    Serial.println(".");
+    buttonPressed[data+1] = true;
+    travel();
+  }
+}
+
+// Gets the closer number 
+bool isCloser(int a, int b, int cur) {
+    return abs(a - cur) < abs(b - cur);
+}
+
+// Checks if a travel is pending
+bool isTravelPending() {
+  int n = 0;
+  for(int i = 0; i<FLOORS_NUM; i++) {
+    if(buttonPressed[i])
+      n++;
+  }
+  if(n>0) return true;
+  return false;
+}
+
+// Opens the elevator door
+void openDoor() {
+  doorIsOpen = true;
+  Serial.println("OPENING DOOR");
+}
+
+// Closes the elevator door
+void closeDoor() {
+  doorIsOpen = false;
+  handleLightFlag = true;
+  Serial.println("CLOSING DOOR");
 }
