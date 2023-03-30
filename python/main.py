@@ -3,7 +3,7 @@ import os
 import threading
 import serial
 
-from audio import Audio
+from audio_text import Audio
 from face import FaceRecognition
 from prediction import Prediction
 
@@ -13,7 +13,7 @@ prediction = None
 current_floor = None
 
 # ser = serial.Serial('COM4', 9600, timeout=1)
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
 
 floors = ["-1", "0", "1", "2", "3", "4", "5", "6"]
 
@@ -85,9 +85,11 @@ def wait_for_manual_response(name, event):
 
 
 def wait_for_verbal_response(name, event):
+    global user, prediction
     print("Waiting for verbal response")
     global result, user, prediction, current_floor
-
+    user = None
+    prediction = None
     # Recognize the face and identify the user
     while user is None:
         face_recognition = FaceRecognition()
@@ -114,13 +116,16 @@ def wait_for_verbal_response(name, event):
 
 def send_floor():
     ser.reset_input_buffer()
-    ser.write((str(result)).encode('utf-8'))
+    if result == -1:
+        print("Entrei")
+        ser.write((str(7)).encode('utf-8'))
+    else:
+        ser.write((str(result)).encode('utf-8'))
 
 
 def run():
     global current_floor
-    print("Starting system...")
-    
+    print("System starting...")
     # Get arduino input
     current_floor = get_current_floor()
 
@@ -141,4 +146,3 @@ def run():
     send_floor()
 
     print("Action added to the database: [" + str(current_floor) + ", " + str(result) + "]")
-
