@@ -23,14 +23,18 @@ class Prediction:
         for item in database:
             if item["_id"] == self.user_id:
                 self.user = item
+                print("User: ", item)
+                break
 
     def get_actions(self):
         self.actions = self.user["actions"]
 
-    def get_actions_from_source(self, source):
+    def get_actions_from_source(self, src):
+        self.source = []
         for item in self.actions:
-            if item["source"] == source:
+            if item["source"] == src:
                 self.source.append(item)
+                print("Action appended: ", item)
 
     def predict_floor(self):
         predictions = []
@@ -38,4 +42,5 @@ class Prediction:
         for i, predict in enumerate(sort):
             if predict["nr_travels"] > 2:
                 predictions.append(predict["destination"])
+                print("Prediciton appended: ", predict["destination"])
         return predictions
